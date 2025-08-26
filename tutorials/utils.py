@@ -26,7 +26,7 @@ from diffusers.models.embeddings import (
 from diffusers.models.modeling_outputs import Transformer2DModelOutput
 from diffusers.models.modeling_utils import ModelMixin
 from diffusers.models.autoencoders import AutoencoderKL
-from diffusers.schedulers import KarrasDiffusionSchedulers
+from diffusers.schedulers import KarrasDiffusionSchedulers, DDPMScheduler
 from diffusers.utils.torch_utils import randn_tensor
 from diffusers.pipelines.pipeline_utils import (
     DiffusionPipeline,

@@ -35,7 +35,7 @@ from utils import (
 )
 
 # our implement
-from DiT import DiTTransformer2DModel
+from tutorials.dit import DiTTransformer2DModel
 
 
 class DiTPipeline(DiffusionPipeline):

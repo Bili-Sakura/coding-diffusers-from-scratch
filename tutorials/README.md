@@ -6,7 +6,7 @@
 
 ## Tutorial 1 — Diffusion Transformer (DiT)
 
-- [DiT.py](./DiT.py) (main)
+- [dit.py](./dit.py) (main)
 - [pipeline_dit.py](./pipeline_dit.py) (main)
 - [utils.py](./utils.py) (utils)
 
@@ -54,6 +54,26 @@
   pages = {4733--4743},
   urldate = {2025-08-20},
   langid = {english},
+}
+
+```
+
+## Tutorial 3 — Denoising Diffusion Probabilistic Models (DDPMs)
+
+- [ddpm.py](./ddpm.py) (main)
+- [pipeline_ddpm.py](./pipeline_ddpm.py) (main)
+- [utils.py](./utils.py) (utils)
+
+```bibtex
+@inproceedings{hoDenoisingDiffusionProbabilistic2020,
+  title = {Denoising {{Diffusion Probabilistic Models}}},
+  booktitle = {Advances in {{Neural Information Processing Systems}}},
+  author = {Ho, Jonathan and Jain, Ajay and Abbeel, Pieter},
+  year = {2020},
+  volume = {33},
+  pages = {6840--6851},
+  publisher = {Curran Associates, Inc.},
+  urldate = {2024-06-13},
 }
 
 ```
