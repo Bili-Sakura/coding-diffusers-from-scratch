@@ -30,6 +30,7 @@ class UNet2DConditionModel:
     @register_to_config
     def __init__(
         self,
+        sample_size: Optional[Union[int, Tuple[int, int]]] = (32, 32),
         in_channels: int = 4,  # latents
         out_channels: int = 4,  # latents
         down_block_types: Tuple[str] = (  # override by config.json
@@ -54,7 +55,7 @@ class UNet2DConditionModel:
         norm_num_groups: Optional[int] = 32,
         time_embedding_type: str = "positional",
         encoder_hid_dim_type: Optional[str] = None,
-        encoder_hid_dim: Optional[int] = None,
+        encoder_hid_dim: Optional[int] = None,  # read from text_encoder/config.json
         cross_attention_dim: Union[int, Tuple[int]] = 1280,
         transformer_layers_per_block: Union[int, Tuple[int], Tuple[Tuple]] = 1,
         reverse_transformer_layers_per_block: Optional[Tuple[Tuple[int]]] = None,
@@ -62,6 +63,7 @@ class UNet2DConditionModel:
             int, Tuple[int]
         ] = 8,  # the same as 'num_attention_heads' follow `diffusers`
         num_attention_heads: Optional[Union[int, Tuple[int]]] = None,
+        time_embedding_dim: Optional[int] = None,
         conv_in_kernel: int = 3,
         conv_out_kernel: int = 3,
         attention_type: str = "default",
@@ -114,9 +116,10 @@ class UNet2DConditionModel:
         )
         # time
         # time_embed_dim: int, timestep_input_dim: int
-        time_embed_dim, timestep_input_dim = self._set_time_proj(  # TODO
+        time_embed_dim, timestep_input_dim = self._set_time_proj(
             time_embedding_type=self.config.time_embedding_type,
             block_out_channels=self.config.block_out_channels,
+            time_embedding_dim=self.config.time_embedding_dim,
         )
         # (B, timestep_input_dim) -> (B, time_embed_dim)
         self.time_embedding = TimestepEmbedding(
@@ -129,7 +132,7 @@ class UNet2DConditionModel:
             # sample_proj_bias=True
         )
 
-        self._set_encoder_hid_proj(  # TODO
+        self._set_encoder_hid_proj(
             encoder_hid_dim_type=self.config.encoder_hid_dim_type,
             cross_attention_dim=cross_attention_dim,
             encoder_hid_dim=self.config.encoder_hid_dim,
@@ -138,7 +141,7 @@ class UNet2DConditionModel:
         # class embedding, we skip it only focusing on text-to-image generation
         # self._set_class_embedding() # No need to implement
 
-        # self._set_add_embedding() # TODO
+        # self._set_add_embedding() # No need to implement
 
         if isinstance(only_cross_attention, bool):
             if mid_block_only_cross_attention is None:
@@ -319,23 +322,96 @@ class UNet2DConditionModel:
             padding=self.config.conv_out_padding,
         )
 
-    def _set_add_embedding():
-        pass
+    def _set_encoder_hid_proj(
+        self,
+        encoder_hid_dim_type: Optional[str],
+        cross_attention_dim: Union[int, Tuple[int]],
+        encoder_hid_dim: Optional[int],
+    ):
+        if encoder_hid_dim_type is None and encoder_hid_dim is not None:
+            # default
+            encoder_hid_dim_type = "text_proj"
+            self.register_to_config(encoder_hid_dim_type=encoder_hid_dim_type)
 
-    def _set_encoder_hid_proj():
-        pass
+        if encoder_hid_dim is None and encoder_hid_dim_type is not None:
+            raise ValueError(
+                f"`encoder_hid_dim` has to be defined when `encoder_hid_dim_type` is set to {encoder_hid_dim_type}."
+            )
+        if encoder_hid_dim_type == "text_proj":
+            self.encoder_hid_proj = nn.Linear(encoder_hid_dim, cross_attention_dim)
+        else:
+            self.encoder_hid_proj = None
+            raise ValueError(
+                f"{encoder_hid_dim_type} does not exist. We only support 'text_proj'. Set self.encoder_hid_proj to None."
+            )
 
-    def _set_time_proj():
-        pass
+    def _set_time_proj(
+        self,
+        time_embedding_type: str,
+        block_out_channels: int,
+        time_embedding_dim: int,
+    ) -> Tuple[int, int]:
+        if time_embedding_type == "fourier":
+            time_embed_dim = time_embedding_dim or block_out_channels[0] * 2
+            if time_embed_dim % 2 != 0:
+                raise ValueError(
+                    f"`time_embed_dim` should be divisible by 2, but is {time_embed_dim}."
+                )
+            self.time_proj = GaussianFourierProjection(
+                embedding_size=time_embed_dim // 2,
+                # scale=1.0,
+                set_W_to_weight=False,
+                log=False,
+                flip_sin_to_cos=True,
+            )
+            timestep_input_dim = time_embed_dim
+        elif time_embedding_type == "positional":
+            time_embed_dim = time_embedding_dim or block_out_channels[0] * 4
 
-    def get_time_emb():
-        pass
+            self.time_proj = Timesteps(
+                num_channels=block_out_channels[0],
+                flip_sin_to_cos=True,
+                downscale_freq_shift=0.0,
+                # scale=1,
+            )
+            timestep_input_dim = block_out_channels[0]
+        else:
+            raise ValueError(
+                f"{time_embedding_type} does not exist. Please make sure to use one of `fourier` or `positional`."
+            )
+        return time_embed_dim, timestep_input_dim
 
-    def time_embedding():
-        pass
+    def get_time_embed(
+        self, sample: torch.Tensor, timestep: Union[torch.Tensor, float, int]
+    ) -> torch.Tensor:
+        timesteps = timestep
+        # we only consider using CPU/GPU
+        if len(timestep.shape) == 0:
+            timesteps = timesteps[None].to(sample.device)
+        # broadcast to batch dimension in a way that's compatible with ONNX/Core ML
+        timesteps = timesteps.expand(sample.shape[0])
 
-    def process_encoder_hidden_states():
-        pass
+        t_emb = self.time_proj(timesteps)
+
+        # `Timesteps` does not contain any weights and will always return f32 tensors
+        # but time_embedding might actually be running in fp16. so we need to cast here.
+        # there might be better ways to encapsulate this.
+        t_emb = t_emb.to(dtype=sample.dtype)
+        return t_emb
+
+    def process_encoder_hidden_states(
+        self, encoder_hidden_states: torch.Tensor
+    ) -> torch.Tensor:
+        if (
+            self.encoder_hid_proj is not None
+            and self.config.encoder_hid_dim_type == "text_proj"
+        ):
+            encoder_hidden_states = self.encoder_hid_proj(encoder_hidden_states)
+        else:
+            raise ValueError(
+                f"{self.config.encoder_hid_dim_type} does not exist. We only support 'text_proj'."
+            )
+        return encoder_hidden_states
 
     def forward(
         self,
@@ -345,13 +421,13 @@ class UNet2DConditionModel:
     ) -> torch.Tensor:
         # 1. time
         # (B, time_embed_dim) or (B, D)
-        t_emb = self.get_time_emb(sample=sample, timestep=timestep)  # TODO
-        emb = self.time_embedding(t_emb)  # TODO
+        t_emb = self.get_time_embed(sample=sample, timestep=timestep)
+        emb = self.time_embedding(t_emb)
 
         # (B, S, D)
         encoder_hidden_states = self.process_encoder_hidden_states(
             encoder_hidden_states=encoder_hidden_states
-        )  # TODO
+        )
 
         # 2. pre-process
         # (B, block_out_channels[0], H, W)
@@ -405,3 +481,41 @@ class UNet2DConditionModel:
         # (B, out_channels, H, W)
         # DONE!
         return sample
+
+    # new feature in `diffusers` implement, we integrate `freeU` technique, a training-free even cost-free method to improve image generation results
+    # the following function should work with function inside upsample_block, namely `CrossAttnUpBlock2D`, `UpBlock2D` etc.
+
+    def enable_freeu(self, s1: float, s2: float, b1: float, b2: float):
+        r"""Enables the FreeU mechanism from https://huggingface.co/papers/2309.11497.
+
+        The suffixes after the scaling factors represent the stage blocks where they are being applied.
+
+        Please refer to the [official repository](https://github.com/ChenyangSi/FreeU) for combinations of values that
+        are known to work well for different pipelines such as Stable Diffusion v1, v2, and Stable Diffusion XL.
+
+        Args:
+            s1 (`float`):
+                Scaling factor for stage 1 to attenuate the contributions of the skip features. This is done to
+                mitigate the "oversmoothing effect" in the enhanced denoising process.
+            s2 (`float`):
+                Scaling factor for stage 2 to attenuate the contributions of the skip features. This is done to
+                mitigate the "oversmoothing effect" in the enhanced denoising process.
+            b1 (`float`): Scaling factor for stage 1 to amplify the contributions of backbone features.
+            b2 (`float`): Scaling factor for stage 2 to amplify the contributions of backbone features.
+        """
+        for i, upsample_block in enumerate(self.up_blocks):
+            setattr(upsample_block, "s1", s1)
+            setattr(upsample_block, "s2", s2)
+            setattr(upsample_block, "b1", b1)
+            setattr(upsample_block, "b2", b2)
+
+    def disable_freeu(self):
+        """Disables the FreeU mechanism."""
+        freeu_keys = {"s1", "s2", "b1", "b2"}
+        for i, upsample_block in enumerate(self.up_blocks):
+            for k in freeu_keys:
+                if (
+                    hasattr(upsample_block, k)
+                    or getattr(upsample_block, k, None) is not None
+                ):
+                    setattr(upsample_block, k, None)
