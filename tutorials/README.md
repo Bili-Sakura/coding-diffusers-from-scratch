@@ -64,6 +64,9 @@
 - [pipeline_ddpm.py](./pipeline_ddpm.py) (main)
 - [utils.py](./utils.py) (utils)
 
+![](https://lilianweng.github.io/posts/2021-07-11-diffusion-models/generative-overview.png)
+![](https://lilianweng.github.io/posts/2021-07-11-diffusion-models/DDPM.png)
+
 ```bibtex
 @inproceedings{hoDenoisingDiffusionProbabilistic2020,
   title = {Denoising {{Diffusion Probabilistic Models}}},
@@ -75,5 +78,14 @@
   publisher = {Curran Associates, Inc.},
   urldate = {2024-06-13},
 }
+@article{weng2021diffusion,
+  title   = "What are diffusion models?",
+  author  = "Weng, Lilian",
+  journal = "lilianweng.github.io",
+  year    = "2021",
+  month   = "Jul",
+  url     = "https://lilianweng.github.io/posts/2021-07-11-diffusion-models/"
+}
+
 
 ```
