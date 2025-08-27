@@ -27,6 +27,19 @@ import torch.nn as nn
 from utils import *
 
 
+@dataclass
+class UNet2DOutput(BaseOutput):
+    """
+    The output of [`UNet2DModel`].
+
+    Args:
+        sample (`torch.Tensor` of shape `(batch_size, num_channels, height, width)`):
+            The hidden states output from the last layer of the model.
+    """
+
+    sample: torch.Tensor
+
+
 class UNet2DModel(ModelMixin, ConfigMixin):
     r"""
     A 2D UNet model that takes a noisy sample and a timestep and returns a sample shaped output.
@@ -249,8 +262,9 @@ class UNet2DModel(ModelMixin, ConfigMixin):
                 num_layers=self.config.layers_per_block + 1,
                 in_channels=input_channel,
                 out_channels=output_channel,
+                prev_output_channel=prev_output_channel,
                 temb_channels=time_embed_dim,
-                add_downsample=not is_final_block,
+                add_upsample=not is_final_block,
                 resnet_eps=self.config.norm_eps,
                 resnet_act_fn=self.config.act_fn,
                 resnet_groups=self.config.norm_num_groups,
@@ -259,9 +273,8 @@ class UNet2DModel(ModelMixin, ConfigMixin):
                     if self.config.attention_head_dim is not None
                     else output_channel
                 ),
-                downsample_padding=self.config.downsample_padding,
                 resnet_time_scale_shift=self.config.resnet_time_scale_shift,
-                downsample_type=self.config.downsample_type,
+                upsample_type=self.config.downsample_type,
                 dropout=self.config.dropout,
             )
             self.up_blocks.append(up_block)
@@ -287,8 +300,8 @@ class UNet2DModel(ModelMixin, ConfigMixin):
         sample: torch.Tensor,
         timestep: Union[torch.Tensor, float, int],
         class_labels: Optional[torch.Tensor] = None,
-        #  return_dict: bool = True,
-    ) -> torch.Tensor:
+        return_dict: bool = True,
+    ) -> Union[UNet2DOutput, Tuple]:
         r"""
         The [`UNet2DModel`] forward method.
 
@@ -298,10 +311,13 @@ class UNet2DModel(ModelMixin, ConfigMixin):
             timestep (`torch.Tensor` or `float` or `int`): The number of timesteps to denoise an input.
             class_labels (`torch.Tensor`, *optional*, defaults to `None`):
                 Optional class labels for conditioning. Their embeddings will be summed with the timestep embeddings.
+            return_dict (`bool`, *optional*, defaults to `True`):
+                Whether or not to return a [`~models.unets.unet_2d.UNet2DOutput`] instead of a plain tuple.
 
-        Return:
-            (`torch.Tensor` of shape `(batch_size, num_channels, height, width)`):
-            The hidden states output from the last layer of the model.
+        Returns:
+            [`~models.unets.unet_2d.UNet2DOutput`] or `tuple`:
+                If `return_dict` is True, an [`~models.unets.unet_2d.UNet2DOutput`] is returned, otherwise a `tuple` is
+                returned where the first element is the sample tensor.
         """
 
         # 0. center input if necessary
@@ -393,7 +409,7 @@ class UNet2DModel(ModelMixin, ConfigMixin):
             )
             sample = sample / timesteps
 
-        # if not return_dict:
-        #     return (sample,)
+        if not return_dict:
+            return (sample,)
 
-        return sample
+        return UNet2DOutput(sample=sample)
