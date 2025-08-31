@@ -86,6 +86,47 @@
   month   = "Jul",
   url     = "https://lilianweng.github.io/posts/2021-07-11-diffusion-models/"
 }
+```
 
+## Tutorial 4 — PixArt-$\alpha$ (PixArt-α)
+
+- [pixart_alpha.py](./pixart_alpha.py) (main)
+- [pipeline_pixart_alpha.py](./pipeline_pixart_alpha.py) (main)
+- [utils.py](./utils.py) (utils)
+
+<p align="center">
+  <div align="center">
+    <img src="./assets/pixart_alpha.png" width="80%">
+  </div>
+</p>
+
+```bibtex
+@inproceedings{chenPixArtaFastTraining2024,
+  title = {{{PixArt-$\alpha$}}: {{Fast Training}} of {{Diffusion Transformer}} for {{Photorealistic Text-to-Image Synthesis}}},
+  shorttitle = {{{PixArt-}}\${\textbackslash}alpha\$},
+  booktitle = {The {{Twelfth International Conference}} on {{Learning Representations}}},
+  author = {Chen, Junsong and Yu, Jincheng and Ge, Chongjian and Yao, Lewei and Xie, Enze and Wang, Zhongdao and Kwok, James and Luo, Ping and Lu, Huchuan and Li, Zhenguo},
+  year = {2024},
+  urldate = {2025-01-12},
+}
+
+```
+
+## Tutorial 5 — Stable Diffusion XL (SDXL)
+
+- [sdxl.py](./sdxl.py) (main)
+- [pipeline_sdxl.py](./pipeline_sdxl.py) (main)
+- [utils.py](./utils.py) (utils)
+
+![](https://hf-mirror.com/stabilityai/stable-diffusion-xl-refiner-1.0/resolve/main/pipeline.png)
+
+```
+@inproceedings{podellSDXLImprovingLatent2024,
+  title = {{{SDXL}}: {{Improving Latent Diffusion Models}} for {{High-Resolution Image Synthesis}}},
+  shorttitle = {{{SDXL}}},
+  booktitle = {The {{Twelfth International Conference}} on {{Learning Representations}}},
+  author = {Podell, Dustin and English, Zion and Lacey, Kyle and Blattmann, Andreas and Dockhorn, Tim and M{\"u}ller, Jonas and Penna, Joe and Rombach, Robin},
+  year = {2024},
+}
 
 ```
