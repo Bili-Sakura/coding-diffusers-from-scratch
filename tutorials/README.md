@@ -130,3 +130,36 @@
 }
 
 ```
+
+## Tutorial 5 — Stable Diffusion 3 & Stable Diffusion 3.5 & Stable Diffusion 3.5 Turbo
+
+- [sd3.py](./sd3.py) (main)
+- [pipeline_sd3.py](./pipeline_sd3.py) (main)
+- [utils.py](./utils.py) (utils)
+
+![](https://learnopencv.com/wp-content/uploads/2024/11/mmdit-x_architecture.png)
+
+![](https://learnopencv.com/wp-content/uploads/2024/11/simplified_architecture_sd35.png)
+
+```bibtex
+@inproceedings{esserScalingRectifiedFlow2024a,
+  title = {Scaling {{Rectified Flow Transformers}} for {{High-Resolution Image Synthesis}}},
+  booktitle = {Forty-First {{International Conference}} on {{Machine Learning}}},
+  author = {Esser, Patrick and Kulal, Sumith and Blattmann, Andreas and Entezari, Rahim and M{\"u}ller, Jonas and Saini, Harry and Levi, Yam and Lorenz, Dominik and Sauer, Axel and Boesel, Frederic and Podell, Dustin and Dockhorn, Tim and English, Zion and Rombach, Robin},
+  year = {2024},
+  month = jun,
+}
+
+@misc{sauerFastHighResolutionImage2024,
+  title = {Fast {{High-Resolution Image Synthesis}} with {{Latent Adversarial Diffusion Distillation}}},
+  author = {Sauer, Axel and Boesel, Frederic and Dockhorn, Tim and Blattmann, Andreas and Esser, Patrick and Rombach, Robin},
+  year = {2024},
+  month = mar,
+  number = {arXiv:2403.12015},
+  eprint = {2403.12015},
+  primaryclass = {cs},
+  publisher = {arXiv},
+  doi = {10.48550/arXiv.2403.12015},
+}
+
+```

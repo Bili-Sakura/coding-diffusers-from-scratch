@@ -9,21 +9,34 @@ from diffusers.utils import (
     scale_lora_layers,
     unscale_lora_layers,
 )
-from diffusers.utils.torch_utils import randn_tensor
+from diffusers.utils.torch_utils import randn_tensor, maybe_allow_in_graph
 from diffusers.models.lora import adjust_lora_scale_text_encoder
 from diffusers.models.attention_processor import (
     AttnProcessor2_0,
     FusedAttnProcessor2_0,
     XFormersAttnProcessor,
 )
-from diffusers.models import AutoencoderKL, ImageProjection, UNet2DConditionModel
+from diffusers.models.attention import FeedForward, JointTransformerBlock
+from diffusers.models.embeddings import CombinedTimestepTextProjEmbeddings, PatchEmbed
+from diffusers.models.normalization import AdaLayerNormContinuous, AdaLayerNormZero
+from diffusers.models.modeling_outputs import Transformer2DModelOutput
+from diffusers.models.modeling_utils import ModelMixin
+from diffusers.models import AutoencoderKL, ImageProjection
 from diffusers.loaders import (
     FromSingleFileMixin,
     IPAdapterMixin,
     StableDiffusionXLLoraLoaderMixin,
     TextualInversionLoaderMixin,
+    SD3IPAdapterMixin,
+    SD3LoraLoaderMixin,
+    PeftAdapterMixin,
+    FromOriginalModelMixin,
+    SD3Transformer2DLoadersMixin,
 )
-from diffusers.schedulers import KarrasDiffusionSchedulers
+from diffusers.schedulers import (
+    KarrasDiffusionSchedulers,
+    FlowMatchEulerDiscreteScheduler,
+)
 from diffusers.pipelines.pipeline_utils import DiffusionPipeline, StableDiffusionMixin
 from diffusers.image_processor import PipelineImageInput, VaeImageProcessor
 from diffusers.callbacks import MultiPipelineCallbacks, PipelineCallback
