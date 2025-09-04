@@ -14,9 +14,14 @@ from diffusers.models.lora import adjust_lora_scale_text_encoder
 from diffusers.models.attention_processor import (
     AttnProcessor2_0,
     FusedAttnProcessor2_0,
+    AttentionProcessor,
     XFormersAttnProcessor,
 )
-from diffusers.models.attention import FeedForward, JointTransformerBlock
+from diffusers.models.attention import (
+    FeedForward,
+    JointTransformerBlock,
+    BasicTransformerBlock,
+)
 from diffusers.models.embeddings import CombinedTimestepTextProjEmbeddings, PatchEmbed
 from diffusers.models.normalization import AdaLayerNormContinuous, AdaLayerNormZero
 from diffusers.models.modeling_outputs import Transformer2DModelOutput
