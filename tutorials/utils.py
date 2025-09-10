@@ -13,8 +13,10 @@ from diffusers.utils.torch_utils import randn_tensor, maybe_allow_in_graph
 from diffusers.models.lora import adjust_lora_scale_text_encoder
 from diffusers.models.attention_processor import (
     AttnProcessor2_0,
+    Attention,
     FusedAttnProcessor2_0,
     AttentionProcessor,
+    JointAttnProcessor2_0,
     XFormersAttnProcessor,
 )
 from diffusers.models.attention import (
